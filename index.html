@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Travel Atlas Demo</title>
+  <style>
+    :root{
+      --bg:#f4f7fb;--ink:#11203b;--muted:#5d6b82;--card:#fff;
+      --primary:#14532d;--primary-2:#0f766e;--shadow:0 18px 45px rgba(17,32,59,0.08);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{
+      margin:0;font-family:Segoe UI,Tahoma,Arial,sans-serif;background:linear-gradient(180deg,#eef5ff 0%,#fff 100%);color:var(--ink)
+    }
+    a{color:inherit;text-decoration:none}img{max-width:100%;display:block}button,input,select{font:inherit}
+    .container{max-width:1200px;margin:0 auto;padding:24px 18px 48px}
+    .topbar{position:sticky;top:0;z-index:9;background:rgba(255,255,255,0.9);backdrop-filter:blur(8px);border-bottom:1px solid rgba(17,32,59,0.06)}
+    .nav{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:12px 18px}
+    .logo{font-size:1.2rem;font-weight:800}
+    .tools{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+    .lang-switcher{display:flex;gap:8px;flex-wrap:wrap}
+    .lang-btn{background:#e8eef7;border:0;padding:8px 12px;border-radius:999px;cursor:pointer;font-weight:700;color:var(--ink)}
+    .lang-btn.active{background:var(--primary);color:#fff}
+    .search-box{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .search-box input, .search-box select{padding:10px 12px;border-radius:12px;border:1px solid rgba(17,32,59,0.08);background:#fff}
+    .hero{display:grid;grid-template-columns:1.2fr 0.8fr;gap:0;overflow:hidden;border-radius:var(--radius);background:linear-gradient(135deg,#0f766e 0%,#14532d 100%);box-shadow:var(--shadow);color:#fff}
+    .hero-copy{padding:32px}
+    .hero-copy h1{margin:0 0 12px;font-size:clamp(2rem,4vw,3rem);line-height:1.1}
+    .hero-copy p{margin:0 0 20px;color:rgba(255,255,255,0.9);max-width:60ch;line-height:1.8}
+    .hero-visual{min-height:270px;background-image:url('https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1200&q=80');background-size:cover;background-position:center}
+    .primary-btn{display:inline-block;padding:10px 16px;border-radius:999px;background:#fff;color:var(--primary);font-weight:800}
+    .section-title{display:flex;align-items:flex-end;justify-content:space-between;margin:30px 0 18px;gap:12px}
+    .section-title h2{margin:0;font-size:clamp(1.6rem,2vw,2.2rem)}
+    .country-grid,.city-grid,.attraction-grid{display:grid;gap:18px}
+    .country-grid{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+    .city-grid{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+    .attraction-grid{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+    .card{background:var(--card);border:1px solid rgba(17,32,59,0.06);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+    .card-media{height:210px;background-size:cover;background-position:center}
+    .card-body{padding:18px}
+    .card-body h3{margin:0 0 8px;font-size:1.2rem}
+    .card-body p{margin:0;color:var(--muted);line-height:1.7}
+    .card-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:16px}
+    .badge{background:rgba(20,83,45,0.08);color:var(--primary);padding:7px 10px;border-radius:999px;font-weight:800;font-size:.75rem}
+    .country-link, .city-link{display:inline-block;background:var(--primary);color:var(--card);padding:8px 12px;border-radius:999px;font-weight:700}
+    .country-section{margin-top:34px;padding-top:8px}
+    .country-header{display:grid;grid-template-columns:1.15fr .85fr;gap:0;border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);background:#fff;border:1px solid rgba(17,32,59,0.06)}
+    .country-header img{width:100%;height:100%;object-fit:cover}
+    .country-header .content{padding:24px}
+    .country-header h2{margin:0 0 8px;font-size:clamp(1.8rem,3vw,2.8rem)}
+    .country-header p{margin:0;color:var(--muted);line-height:1.8}
+    .meta-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+    .meta-pill{background:#edf6f3;color:var(--primary);padding:7px 10px;border-radius:999px;font-weight:700;font-size:.8rem}
+    .footer{padding:22px 0 36px;text-align:center;color:var(--muted)}
+    @media (max-width: 860px){ .hero,.country-header{grid-template-columns:1fr}.nav{flex-direction:column;align-items:flex-start}.tools{width:100%}.search-box{width:100%}.search-box input{flex:1}} 
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="container nav">
+      <div class="logo">Travel Atlas</div>
+      <div class="tools">
+        <div class="search-box">
+          <input id="searchInput" type="text" placeholder="جستجوی کشور یا شهر..." aria-label="Search" />
+          <select id="filterSelect" aria-label="Filter">
+            <option value="all">همه</option>
+            <option value="withImages">دارای تصویر</option>
+          </select>
+        </div>
+        <div class="lang-switcher" aria-label="Language switcher">
+          <button class="lang-btn active" data-lang="fa">فارسی</button>
+          <button class="lang-btn" data-lang="en">EN</button>
+          <button class="lang-btn" data-lang="fr">FR</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero" aria-label="site header">
+      <div class="hero-copy">
+        <h1 data-i18n='{"fa":"نقشهٔ گردشگری نمونه","en":"Sample Travel Atlas","fr":"Atlas touristique de démonstration"}'>نقشهٔ گردشگری نمونه</h1>
+        <p data-i18n='{"fa":"این دمو نمونه‌ای از کشورها، شهرها و جاذبه‌های گردشگری است. هر بخش با تصویر، توضیح و لینک جداگانه طراحی شده است.","en":"This demo is a sample tourism atlas showing countries, cities, and attractions. Each section includes its own image, description, and anchor links.","fr":"Cette démo est un atlas touristique d’exemple montrant des pays, villes et attractions. Chaque section contient son propre image, description et liens d’ancrage."}'>این دمو نمونه‌ای از کشورها، شهرها و جاذبه‌های گردشگری است. هر بخش با تصویر، توضیح و لینک جداگانه طراحی شده است.</p>
+        <a href="#countries" class="primary-btn" data-i18n='{"fa":"دیدن کشورها","en":"Explore countries","fr":"Voir les pays"}'>دیدن کشورها</a>
+      </div>
+      <div class="hero-visual" aria-label="travel panorama"></div>
+    </section>
+
+    <div id="countries" class="section-title">
+      <h2 data-i18n='{"fa":"کشورهای نمونه","en":"Sample countries","fr":"Pays de démonstration"}'>کشورهای نمونه</h2>
+    </div>
+    <section id="countryGrid" class="country-grid" aria-label="country list"></section>
+
+    <section id="countryDetails" aria-label="country details"></section>
+  </main>
+
+  <footer class="footer">
+    Travel Atlas Demo • Persian • English • Français
+  </footer>
+
+  <script>
+    const data = {
+      countries: [
+        {
+          id: 'iran',
+          name: { fa: 'ایران', en: 'Iran', fr: 'Iran' },
+          heroTitle: { fa: 'گردشگری ایران', en: 'Tourism in Iran', fr: 'Tourisme en Iran' },
+          overview: {
+            fa: 'ایران با تاریخ کهن، فرهنگ غنی و جاذبه‌های طبیعی و تاریخی، یکی از مهم‌ترین مقاصد گردشگری در منطقه است.',
+            en: 'Iran combines deep historical heritage, rich culture, and striking natural scenery, making it a major travel destination.',
+            fr: 'L’Iran associe un riche patrimoine historique, une culture profonde et des paysages naturels impressionnants.'
+          },
+          image: 'https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=1200&q=80',
+          badges: ['فرهنگی', 'تاریخی', 'طبیعی'],
+          cities: [
+            {
+              id: 'tehran',
+              name: { fa: 'تهران', en: 'Tehran', fr: 'Téhéran' },
+              summary: {
+                fa: 'پایتخت ایران با بازارها، مراکز فرهنگی و نزدیکی به کوه‌ها.',
+                en: 'The capital of Iran with bazaars, cultural centers, and mountain access nearby.',
+                fr: 'La capitale de l’Iran, avec ses bazars, centres culturels et accès aux montagnes.'
+              },
+              image: 'https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=1200&q=80',
+              attractions: [
+                {
+                  title: { fa: 'میدان آزادی', en: 'Azadi Square', fr: 'Place Azadi' },
+                  image: 'https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=1200&q=80',
+                  description: {
+                    fa: 'میدان آزادی از نمادهای شهری تهران است و با معماری مدرن خود شناخته می‌شود.',
+                    en: 'Azadi Square is one of Tehran’s iconic urban landmarks and a symbol of modern architecture.',
+                    fr: 'La place Azadi est l’un des symboles urbains de Téhéran et représente l’architecture moderne.'
+                  }
+                },
+                {
+                  title: { fa: 'موزه ملی ایران', en: 'National Museum of Iran', fr: 'Musée national d’Iran' },
+                  image: 'https://images.unsplash.com/photo-1511818966892-d7d671e672a2?auto=format&fit=crop&w=1200&q=80',
+                  description: {
+                    fa: 'این موزه به بررسی تاریخ و فرهنگ ایران از دوران پیش از تاریخ تا دوران اسلامی می‌پردازد.',
+                    en: 'This museum tells the story of Iranian history and culture from prehistoric times to the Islamic era.',
+                    fr: 'Ce musée retrace l’histoire et la culture de l’Iran depuis la préhistoire jusqu’à l’époque islamique.'
+                  }
+                }
+              ]
+            },
+            {
+              id: 'isfahan',
+              name: { fa: 'اصفهان', en: 'Isfahan', fr: 'Ispahan' },
+              summary: {
+                fa: 'اصفهان به خاطر پل‌ها، میدان‌ها و باغ‌ها، یکی از زیباترین شهرهای ایران است.',
+                en: 'Isfahan is famous for its bridges, squares, and gardens, and is one of the most beautiful cities in Iran.',
+                fr: 'Ispahan est connue pour ses ponts, ses places et ses jardins, et est l’une des villes les plus belles d’Iran.'
+              },
+              image: 'https://images.unsplash.com/photo-1493246507139-91e8fad9978e?auto=format&fit=crop&w=1200&q=80',
+              attractions: [
+                {
+                  title: { fa: 'میدان امام', en: 'Imam Square', fr: 'Place Imam' },
+                  image: 'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?auto=format&fit=crop&w=1200&q=80',
+                  description: {
+                    fa: 'میدان امام یکی از بزرگ‌ترین میدان‌های تاریخی جهان و هسته مرکزی معماری صفوی است.',
+                    en: 'Imam Square is one of the world’s largest historic squares and a core Safavid architectural masterpiece.',
+                    fr: 'La place Imam est l’une des plus grandes places historiques du monde et un joyau architectural safavide.'
+                  }
+                },
+                {
+                  title: { fa: 'سی‌وسه‌پل', en: 'Siosepol', fr: 'Pont Si-o-Seh' },
+                  image: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80',
+                  description: {
+                    fa: 'سی‌وسه‌پل نماد معماری و زیبایی شهری اصفهان است و در عصر صفویه ساخته شد.',
+                    en: 'Siosepol is a symbol of Isfahan’s architecture and beauty and was built during the Safavid era.',
+                    fr: 'Le pont Si-o-Seh est un symbole de l’architecture et de la beauté d’Ispahan et fut construit à l’époque safavide.'
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          id: 'france',
+          name: { fa: 'فرانسه', en: 'France', fr: 'France' },
+          heroTitle: { fa: 'گردشگری فرانسه', en: 'Tourism in France', fr: 'Tourisme en France' },
+          overview: {
+            fa: 'فرانسه به خاطر شهرهای تاریخی، موزه‌ها و فرهنگ غنی، یکی از محبوب‌ترین مقاصد جهان است.',
+            en: 'France is among the world’s most popular destinations thanks to its historic cities, museums, and rich culture.',
+            fr: 'La France appartient aux destinations les plus populaires au monde, grâce à ses villes historiques, musées et culture riche.'
+          },
+          image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1200&q=80',
+          badges: ['هنری', 'تاریخی', 'فرهنگی'],
+          cities: [
+            {
+              id: 'paris',
+              name: { fa: 'پاریس', en: 'Paris', fr: 'Paris' },
+              summary: {
+                fa: 'پاریس پایتخت هنر و مد است و هر گوشه‌ای از آن خاطره‌انگیز است.',
+                en: 'Paris is the capital of art and fashion, with unforgettable neighborhoods and landmarks.',
+                fr: 'Paris est la capitale de l’art et de la mode, avec des quartiers et monuments inoubliables.'
+              },
+              image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1200&q=80',
+              attractions: [
+                {
+                  title: { fa: 'برج ایفل', en: 'Eiffel Tower', fr: 'Tour Eiffel' },
+                  image: 'https://images.unsplash.com/photo-1511739001486-6bfe10ce785f?auto=format&fit=crop&w=1200&q=80',
+                  description: { fa: 'برج ایفل نماد پاریس و یکی از شناخته‌شده‌ترین سازه‌های جهان است.', en: 'The Eiffel Tower is Paris’s most iconic landmark and one of the world’s most visited attractions.', fr: 'La tour Eiffel est le symbole de Paris et l’un des monuments les plus visités au monde.' }
+                },
+                {
+                  title: { fa: 'موزه لوور', en: 'Louvre Museum', fr: 'Musée du Louvre' },
+                  image: 'https://images.unsplash.com/photo-1543349689-9a4d426bee8e?auto=format&fit=crop&w=1200&q=80',
+                  description: { fa: 'لوور یکی از بزرگ‌ترین و مهم‌ترین موزه‌های هنری جهان است.', en: 'The Louvre is one of the world’s largest and most important art museums.', fr: 'Le Louvre est l’un des plus grands et importants musées d’art au monde.' }
+                }
+              ]
+            },
+            {
+              id: 'lyon',
+              name: { fa: 'لیون', en: 'Lyon', fr: 'Lyon' },
+              summary: { fa: 'لیون با غذاهای معروف و محله‌های تاریخی خود مشهور است.', en: 'Lyon is famous for its cuisine and historic quarters.', fr: 'Lyon est célèbre pour sa gastronomie et ses quartiers historiques.' },
+              image: 'https://images.unsplash.com/photo-1528747045269-390fe33c19f2?auto=format&fit=crop&w=1200&q=80',
+              attractions: [
+                {
+                  title: { fa: 'محله قدیمی', en: 'Old Town', fr: 'Vieux Lyon' },
+                  image: 'https://images.unsplash.com/photo-1509233725247-49e657c54213?auto=format&fit=crop&w=1200&q=80',
+                  description: { fa: 'کوچه‌های باریک و خانه‌های سنگی از جذابیت‌های محله قدیمی لیون هستند.', en: 'Narrow lanes and stone houses make the old quarter especially charming.', fr: 'Les ruelles étroites et les maisons en pierre rendent le vieux quartier très charmant.' }
+                },
+                {
+                  title: { fa: 'کلیسای چهارویه', en: 'Fourvière Basilica', fr: 'Basilique de Fourvière' },
+                  image: 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=1200&q=80',
+                  description: { fa: 'این کلیسا با منظرهٔ دیدنی بر فراز شهر، یکی از دیدنی‌های اصلی لیون است.', en: 'This basilica sits high above the city and offers spectacular views.', fr: 'Cette basilique domine la ville et offre une vue spectaculaire.' }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          id: 'japan',
+          name: { fa: 'ژاپن', en: 'Japan', fr: 'Japon' },
+          heroTitle: { fa: 'گردشگری ژاپن', en: 'Tourism in Japan', fr: 'Tourisme au Japon' },
+          overview: {
+            fa: 'ژاپن با ترکیب فناوری مدرن و فرهنگ سنتی، تجربه‌ای بی‌نظیر از سفر ارائه می‌دهد.',
+            en: 'Japan blends modern technology with centuries-old traditions to create a remarkable travel experience.',
+            fr: 'Le Japon combine technologie moderne et traditions anciennes pour offrir une expérience de voyage unique.'
+          },
+          image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=1200&q=80',
+          badges: ['فرهنگی', 'معماری', 'طبیعی'],
+          cities: [
+            {
+              id: 'tokyo',
+              name: { fa: 'توکیو', en: 'Tokyo', fr: 'Tokyo' },
+              summary: {
+                fa: 'توکیو شهری مدرن، پرجنب‌وجوش و بسیار متنوع است.',
+                en: 'Tokyo is a large, vibrant, and diverse metropolis.',
+                fr: 'Tokyo est une métropole moderne, animée et très diversifiée.'
+              },
+              image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=1200&q=80',
+              attractions: [
+                {
+                  title: { fa: 'معبد سِن‌سوجی', en: 'Senso-ji Temple', fr: 'Temple Senso-ji' },
+                  image: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=1200&q=80',
+                  description: { fa: 'این معبد قدیمی‌ترین معبد توکیو و یکی از محبوب‌ترین جاذبه‌های آن است.', en: 'This ancient temple is one of Tokyo’s oldest and most famous attractions.', fr: 'Ce temple ancien est l’un des plus anciens et célèbres de Tokyo.' }
+                },
+                {
+                  title: { fa: 'شینجاباشی', en: 'Shibuya', fr: 'Shibuya' },
+                  image: 'https://images.unsplash.com/photo-1526481280695-3c4691d4df91?auto=format&fit=crop&w=1200&q=80',
+                  description: { fa: 'شینجاباشی با چراغ‌ها و فرهنگ جوان خود مشهور است.', en: 'Shibuya is known for neon lights, fashion, and lively streets.', fr: 'Shibuya est connu pour ses lumières néon, sa mode et ses rues animées.' }
+                }
+              ]
+            },
+            {
+              id: 'kyoto',
+              name: { fa: 'کیوتو', en: 'Kyoto', fr: 'Kyoto' },
+              summary: {
+                fa: 'کیوتو به خاطر معابد، باغ‌ها و فرهنگ سنتی در ژاپن معروف است.',
+                en: 'Kyoto is famous for temples, gardens, and traditional Japanese culture.',
+                fr: 'Kyoto est célèbre pour ses temples, jardins et culture traditionnelle japonaise.'
+              },
+              image: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=1200&q=80',
+              attractions: [
+                {
+                  title: { fa: 'فوشیمی ایناری', en: 'Fushimi Inari', fr: 'Fushimi Inari' },
+                  image: 'https://images.unsplash.com/photo-1528164344705-47542687000d?auto=format&fit=crop&w=1200&q=80',
+                  description: { fa: 'دروازه‌های قرمز و مسیرهای پیاده‌روی، تجربه‌ای خاص در کیوتو به شما می‌دهد.', en: 'The red torii gates and walking paths offer a memorable Kyoto experience.', fr: 'Les portails torii rouges et les sentiers offrent une expérience mémorable à Kyoto.' }
+                },
+                {
+                  title: { fa: 'کین‌کاکو-جی', en: 'Kinkaku-ji', fr: 'Kinkaku-ji' },
+                  image: 'https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?auto=format&fit=crop&w=1200&q=80',
+                  description: { fa: 'این معبد طلایی از معروف‌ترین جاذبه‌های معماری ژاپن است.', en: 'Kinkaku-ji is a famous golden temple and an iconic Japanese architectural landmark.', fr: 'Kinkaku-ji est un célèbre temple doré et un monument architectural emblématique du Japon.' }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    };
+
+    const state = { lang: 'fa' };
+
+    function t(value, lang) {
+      if (!value) return '';
+      return value[lang] || value.fa || value.en || '';
+    }
+
+    function renderLanguageButtons(){
+      document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.lang === state.lang);
+      });
+    }
+
+    function renderCountryGrid() {
+      const grid = document.getElementById('countryGrid');
+      grid.innerHTML = '';
+      data.countries.forEach(country => {
+        const card = document.createElement('article');
+        card.className = 'card';
+        const cityCount = country.cities.length;
+        card.innerHTML = `
+          <div class="card-media" style="background-image:url('${country.image}')"></div>
+          <div class="card-body">
+            <h3>${t(country.name, state.lang)}</h3>
+            <p>${t(country.overview, state.lang)}</p>
+            <div class="card-foot">
+              <span class="badge">${cityCount} ${state.lang === 'fa' ? 'شهر' : state.lang === 'en' ? 'cities' : 'villes'}</span>
+              <a href="#${country.id}" class="country-link">${state.lang === 'fa' ? 'بازدید' : state.lang === 'en' ? 'View' : 'Voir'}</a>
+            </div>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function renderCountryDetails() {
+      const host = document.getElementById('countryDetails');
+      host.innerHTML = '';
+      data.countries.forEach(country => {
+        const section = document.createElement('section');
+        section.id = country.id;
+        section.className = 'country-section';
+        const cityCards = country.cities.map(city => `
+          <article class="card" id="${city.id}">
+            <div class="card-media" style="background-image:url('${city.image}')"></div>
+            <div class="card-body">
+              <h3>${t(city.name, state.lang)}</h3>
+              <p>${t(city.summary, state.lang)}</p>
+              <div class="card-foot">
+                <span class="badge">${city.attractions.length} ${state.lang === 'fa' ? 'جاذبه' : state.lang === 'en' ? 'attractions' : 'attractions'}</span>
+                <a href="#${city.id}" class="city-link">${state.lang === 'fa' ? 'شهر' : state.lang === 'en' ? 'City' : 'Ville'}</a>
+              </div>
+              <div class="attraction-grid" style="margin-top:16px;">
+                ${city.attractions.map(attraction => `
+                  <div class="card" style="overflow:hidden;">
+                    <div class="card-media" style="height:160px;background-image:url('${attraction.image}')"></div>
+                    <div class="card-body">
+                      <h3>${t(attraction.title, state.lang)}</h3>
+                      <p>${t(attraction.description, state.lang)}</p>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          </article>
+        `).join('');
+
+        section.innerHTML = `
+          <div class="country-header">
+            <img src="${country.image}" alt="${t(country.name, state.lang)}" />
+            <div class="content">
+              <h2>${t(country.heroTitle, state.lang)}</h2>
+              <p>${t(country.overview, state.lang)}</p>
+              <div class="meta-list">
+                ${country.badges.map(b => `<span class="meta-pill">${b}</span>`).join('')}
+              </div>
+            </div>
+          </div>
+          <div class="section-title" style="margin-top:24px;">
+            <h2>${state.lang === 'fa' ? 'شهرهای مهم' : state.lang === 'en' ? 'Key cities' : 'Villes clés'}</h2>
+          </div>
+          <div class="city-grid">${cityCards}</div>
+        `;
+        host.appendChild(section);
+      });
+    }
+
+    function render() {
+      renderLanguageButtons();
+      renderCountryGrid();
+      renderCountryDetails();
+      applySearch();
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        try {
+          const obj = JSON.parse(el.dataset.i18n);
+          el.textContent = obj[state.lang] || obj.fa || obj.en || '';
+        } catch (e) {}
+      });
+    }
+
+    function applySearch() {
+      const q = document.getElementById('searchInput').value.trim().toLowerCase();
+      const filter = document.getElementById('filterSelect').value;
+      const allCards = document.querySelectorAll('.card');
+      allCards.forEach(card => {
+        const text = card.innerText.toLowerCase();
+        let match = true;
+        if (q && !text.includes(q)) match = false;
+        if (filter === 'withImages') {
+          const hasImage = card.querySelector('.card-media') && card.querySelector('.card-media').style.backgroundImage;
+          if (!hasImage) match = false;
+        }
+        card.style.display = match ? '' : 'none';
+      });
+    }
+
+    document.getElementById('searchInput').addEventListener('input', applySearch);
+    document.getElementById('filterSelect').addEventListener('change', applySearch);
+
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.lang = btn.dataset.lang;
+        render();
+      });
+    });
+
+    render();
+  </script>
+</body>
+</html>
